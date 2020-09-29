@@ -8,4 +8,4 @@ class Customer(models.Model):
   created_at = models.DateTimeField(auto_now_add=True)
 
   # secret_box_model = apps.get_model('SecretBox')
-  box = models.ForeignKey( 'hidden.SecretBox', related_name='box', on_delete=models.CASCADE, blank=True, null=True )
+  box = models.ForeignKey( 'hidden.SecretBox', related_name='members', on_delete=models.CASCADE, blank=True, null=True )

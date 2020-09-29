@@ -19,4 +19,4 @@ class SecretBoxSerializer( serializers.ModelSerializer ):
   members = CustomerSerializer(many=True, read_only=True)
   class Meta:
     model = SecretBox
-    fields = ['name', 'admin', 'members']
+    fields = ('id', 'name', 'admin', 'members')
