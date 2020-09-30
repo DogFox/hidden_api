@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from datetime import datetime
-from .models import Customer,SecretBox
+from .models import User,SecretBox
 
-class CustomerSerializer( serializers.ModelSerializer ):
+class UserSerializer( serializers.ModelSerializer ):
   class Meta:
-    model = Customer
+    model = User
     fields = ( 'id', 'name', 'email')
 
   # def __init__(self, customer, **kwargs):
@@ -16,7 +16,7 @@ class CustomerSerializer( serializers.ModelSerializer ):
   #   self.email = customer.email
 
 class SecretBoxSerializer( serializers.ModelSerializer ):
-  members = CustomerSerializer(many=True, read_only=True)
+  members = UserSerializer(many=True, read_only=True)
   class Meta:
     model = SecretBox
-    fields = ('id', 'name', 'admin', 'members')
+    fields = ('id', 'name', 'admin', 'description', 'members')
