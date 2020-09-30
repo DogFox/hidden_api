@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from datetime import datetime
-from .models import User,SecretBox
+from .models import User,SecretBox,SecretboxMembers
 
 class UserSerializer( serializers.ModelSerializer ):
   class Meta:
@@ -20,3 +20,8 @@ class SecretBoxSerializer( serializers.ModelSerializer ):
   class Meta:
     model = SecretBox
     fields = ('id', 'name', 'admin', 'description', 'members')
+
+class SecretboxMembersSerializer( serializers.ModelSerializer ):
+  class Meta:
+    model = SecretboxMembers
+    fields = ('id', 'secretbox', 'user')

@@ -7,4 +7,4 @@ class SecretBox(models.Model):
   
   # customer_model = apps.get_model('Customer')
   admin = models.ForeignKey('hidden.User', related_name='admin', on_delete=models.CASCADE, null=True, blank=True)
-  members = models.ManyToManyField('hidden.User')
+  members = models.ManyToManyField('hidden.User', through='SecretboxMembers')

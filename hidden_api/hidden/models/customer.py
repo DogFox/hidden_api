@@ -7,6 +7,14 @@ class User(models.Model):
   email = models.EmailField()
   created_at = models.DateTimeField(auto_now_add=True)
 
+class SecretboxMembers(models.Model):
+  secretbox = models.ForeignKey('hidden.SecretBox', models.DO_NOTHING)
+  user = models.ForeignKey('hidden.User', models.DO_NOTHING)
+
+  class Meta:
+      db_table = 'hidden_secretbox_members'
+      unique_together = (('secretbox', 'user'),)
+
   # secret_box_model = apps.get_model('SecretBox')
   # box = models.ForeignKey( 'hidden.SecretBox', related_name='members', on_delete=models.CASCADE, blank=True, null=True )
 
