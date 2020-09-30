@@ -7,9 +7,18 @@ class User(models.Model):
   email = models.EmailField()
   created_at = models.DateTimeField(auto_now_add=True)
 
+class SecretBox(models.Model):
+  name = models.CharField(max_length=200)
+  description = models.CharField(max_length=800, null=True, blank=True)
+  
+  # customer_model = apps.get_model('Customer')
+  admin = models.ForeignKey('hidden.User', related_name='admin', on_delete=models.CASCADE, null=True, blank=True)
+  members = models.ManyToManyField('hidden.User', through='SecretboxMembers', through_fields=('secretbox', 'user'))
+
 class SecretboxMembers(models.Model):
-  secretbox = models.ForeignKey('hidden.SecretBox', models.DO_NOTHING)
-  user = models.ForeignKey('hidden.User', models.DO_NOTHING)
+  secretbox = models.ForeignKey('hidden.SecretBox', models.DO_NOTHING, related_name='secretbox')
+  user = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='user')
+  friend = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='friend', null=True, blank=True)
 
   class Meta:
       db_table = 'hidden_secretbox_members'

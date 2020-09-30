@@ -57,4 +57,7 @@ def post_peoples( request):
         
     return Response( status=status.HTTP_201_CREATED)
 
-    
+@api_view(['GET', 'POST', 'DELETE'])
+def swop_peoples( request):
+    if request.method == 'POST': 
+      return Response(data='Массив участников пустой', status=401)
