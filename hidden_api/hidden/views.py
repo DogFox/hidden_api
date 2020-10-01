@@ -3,11 +3,11 @@ from django.shortcuts import get_object_or_404
 
 from .models import User
 from .models import SecretBox
-from .models import SecretboxMembers
+from .models import Membership
 
 from .serializers import UserSerializer
 from .serializers import SecretBoxSerializer
-from .serializers import SecretboxMembersSerializer
+from .serializers import MembershipSerializer
 
 from rest_framework import generics
 from rest_framework import status
@@ -16,16 +16,20 @@ from rest_framework.fields import empty
 from rest_framework.decorators import api_view
 
 class UserListCreate( generics.ListCreateAPIView):
-  queryset = User.objects.all()
-  serializer_class = UserSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 class SecretBoxListView( generics.ListAPIView):
-  queryset = SecretBox.objects.all()
-  serializer_class = SecretBoxSerializer
+    queryset = SecretBox.objects.all()
+    serializer_class = SecretBoxSerializer
   
 class draft_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SecretBox.objects.all()
     serializer_class = SecretBoxSerializer
+    # friends = SecretboxMembersSerializer(source='secretboxmembers_set', many=True)
+class membership_detail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Membership.objects.all()
+    serializer_class = MembershipSerializer
 
 @api_view(['GET', 'POST', 'DELETE'])
 def post_peoples( request):
@@ -47,11 +51,11 @@ def post_peoples( request):
           serializer = UserSerializer(data=santa)
           serializer.is_valid()
           new_member = serializer.save()
-          member = {'secretbox': new_box.id, 'user': new_member.id}
-          member_serializer = SecretboxMembersSerializer(data=member)
-          if not member_serializer.is_valid():
-            return Response(data=member_serializer.errors, status=401)
-          member_serializer.save()
+          member = {'secretbox': new_box.id, 'santa': new_member.id}
+          membership_serializer = MembershipSerializer(data=member)
+          if not membership_serializer.is_valid():
+            return Response(data=membership_serializer.errors, status=401)
+          membership_serializer.save()
       else:
         return Response(data='Массив участников пустой', status=401)
         
