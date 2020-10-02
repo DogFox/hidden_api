@@ -13,5 +13,5 @@ class SecretBox(models.Model):
   
 class Membership(models.Model):
   secretbox = models.ForeignKey('hidden.SecretBox', models.DO_NOTHING, related_name='secretboxs')
-  santa = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='santas')
-  member = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='friends', null=True, blank=True)
+  santa = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='santas', null=True, blank=True)
+  member = models.ForeignKey('hidden.User', models.DO_NOTHING, related_name='members')

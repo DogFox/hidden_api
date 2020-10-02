@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+import random
 
 from .models import User
 from .models import SecretBox
@@ -51,17 +52,34 @@ def post_peoples( request):
           serializer = UserSerializer(data=santa)
           serializer.is_valid()
           new_member = serializer.save()
-          member = {'secretbox': new_box.id, 'santa': new_member.id}
+          member = {'secretbox': new_box.id, 'member': new_member.id}
           membership_serializer = MembershipSerializer(data=member)
           if not membership_serializer.is_valid():
             return Response(data=membership_serializer.errors, status=401)
           membership_serializer.save()
       else:
         return Response(data='Массив участников пустой', status=401)
-        
+    
+    draft(new_box.id)
     return Response( status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST', 'DELETE'])
 def swop_peoples( request):
     if request.method == 'POST': 
+      draft(request.data['id'])
       return Response(data='Массив участников пустой', status=401)
+
+def draft(draft_id):
+  members = []
+  memberships_set = Membership.objects.filter(secretbox=draft_id)
+  for membership in memberships_set:
+    members.append(membership.member_id)
+  
+  santas = members.copy()
+  for membership in memberships_set:
+    ind_old = members.index(membership.member_id)
+    while santas[ind_old] == membership.member_id:
+      random.shuffle(santas)
+    
+    membership.santa = User.objects.get(pk=santas[ind_old])
+    membership.save()

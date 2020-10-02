@@ -8,9 +8,12 @@ class UserSerializer( serializers.ModelSerializer ):
     fields = ( 'id', 'name', 'email' )
 
 class MembershipSerializer( serializers.ModelSerializer ):
+  member_name = serializers.ReadOnlyField(source='member.name')
+  member_email = serializers.ReadOnlyField(source='member.email')
+  santa_name = serializers.ReadOnlyField(source='santa.name')
   class Meta:
     model = Membership
-    fields = ('id', 'secretbox', 'santa', 'member')
+    fields = ('id', 'secretbox', 'santa', 'member', 'santa_name', 'member_name', 'member_email')
 
 class SecretBoxSerializer( serializers.ModelSerializer ):
   memberships = MembershipSerializer(source='secretboxs', many=True, read_only=True)
