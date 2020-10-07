@@ -17,18 +17,18 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.fields import empty
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
 class UserCreate(generics.CreateAPIView):
-    permission_classes = ()
-    authentication_classes = ()
-    serializer_class = UserSerializer
+  permission_classes = ()
+  authentication_classes = ()
+  serializer_class = UserSerializer
 
 class UserLogin(APIView): 
-  permission_classes = (AllowAny,)
-  http_method_names = ['get', 'head']
+  permission_classes = ()
+  authentication_classes = ()
 
   def post(self, request):
     username = request.data.get("username")
@@ -39,9 +39,6 @@ class UserLogin(APIView):
     else:
         return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-  def get(self, request):
-    test = 1
-    return Response('tetet')
 
 class MemberListCreate( generics.ListCreateAPIView):
     queryset = Member.objects.all()
@@ -76,8 +73,9 @@ def post_peoples( request):
 
         new_box = box_serializer.save()
         for santa in request.data['items']:
-          new_user = User.objects.get(email=santa['email'])
-          if not new_user:
+          try:
+            new_user = User.objects.get(email=santa['email'])
+          except:
             new_user_serializer = UserSerializer(data={'firstname': santa['name'], 'username': santa['email'], 'email': santa['email'], 'password': santa['email']})
             if not new_user_serializer.is_valid():
               return Response(data=new_user_serializer.errors, status=401)
@@ -105,11 +103,12 @@ def swop_peoples( request):
   return Response(data='Перемешано успешно', status=201)
     
 # @api_view(['GET'])
+# @authentication_classes(())
+# @permission_classes(())
 # def check_system( request):
-#   permission_classes = ()
-#   authentication_classes = ()
-#   if request.method == 'GET': 
-#     test = 1
+#   API_key = request.META.get('HTTP_AUTHORIZATION')[6:]
+  
+#   test = 1
 #   return Response(data='Проверено', status=201)
 
 def draft(draft_id):

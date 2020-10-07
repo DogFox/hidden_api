@@ -11,6 +11,6 @@ urlpatterns = [
     path('api/membership/<int:pk>/', views.membership_detail.as_view(), name='membership-detail'),
     path('api/users/register/', views.UserCreate.as_view(), name='user-create'),
     path('api/users/login/', views.UserLogin.as_view(), name='user-login'),
-    path('api/check_system', views.UserCreate.as_view(), name='check-system'),
+    # path('api/check_system/', views.check_system, name='check-system'),
     
 ]
