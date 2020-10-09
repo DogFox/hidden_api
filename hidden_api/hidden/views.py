@@ -47,6 +47,13 @@ class MemberListCreate( generics.ListCreateAPIView):
 class SecretBoxListView( generics.ListAPIView):
     queryset = SecretBox.objects.all()
     serializer_class = SecretBoxSerializer
+
+    def get_queryset(self):
+      user = self.request.user
+      members = Member.objects.filter(user=user)
+      memberships = Membership.objects.filter(member__in=members)
+
+      return SecretBox.objects.filter(secretboxs__in=memberships)
   
 class draft_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SecretBox.objects.all()
