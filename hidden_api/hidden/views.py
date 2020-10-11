@@ -78,8 +78,9 @@ class membership_detail(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET', 'POST', 'DELETE'])
 def post_peoples( request):
     if request.method == 'POST': 
-      box_name = {'name': request.data['box'], 'admin': request.user.id}
-      box_serializer = SecretBoxSerializer(data=box_name)
+      box = request.data['box']
+      box['admin'] = request.user.id
+      box_serializer = SecretBoxSerializer(data=box)
       if not box_serializer.is_valid():
         return Response(data=box_serializer.errors, status=401)
 

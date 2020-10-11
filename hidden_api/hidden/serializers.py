@@ -50,7 +50,8 @@ class SecretBoxSerializer( serializers.ModelSerializer ):
   def get_fields(self, *args, **kwargs):
     fields = super().get_fields(*args, **kwargs)
     request = self.context.get('request')
-    params = request.query_params
-    if request is not None and ( params.get('admin') == 'false' or not params.get('admin')) :
-        fields.pop('memberships', None)
+    if request is not None :
+      params = request.query_params
+      if params.get('admin') == 'false' or not params.get('admin'):
+          fields.pop('memberships', None)
     return fields
