@@ -34,6 +34,23 @@ class MembershipSerializer( serializers.ModelSerializer ):
 
 class SecretBoxSerializer( serializers.ModelSerializer ):
   memberships = MembershipSerializer(source='secretboxs', many=True, read_only=True)
+  santas = serializers.SerializerMethodField()
+
+  def get_santas(self, obj):
+    user = self.context['request'].user
+    members = Member.objects.filter(user=user)
+    memberships = Membership.objects.filter(santa__in=members, secretbox=obj)
+    serializer = MembershipSerializer(memberships, many=True)
+    return serializer.data
+
   class Meta:
     model = SecretBox
-    fields = ('id', 'name', 'admin', 'description', 'memberships')
+    fields = ('id', 'name', 'admin', 'description', 'memberships', 'santas')
+
+  def get_fields(self, *args, **kwargs):
+    fields = super().get_fields(*args, **kwargs)
+    request = self.context.get('request')
+    params = request.query_params
+    if request is not None and ( params.get('admin') == 'false' or not params.get('admin')) :
+        fields.pop('memberships', None)
+    return fields

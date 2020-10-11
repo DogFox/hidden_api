@@ -58,15 +58,27 @@ class SecretBoxListView( generics.ListAPIView):
 class draft_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SecretBox.objects.all()
     serializer_class = SecretBoxSerializer
+
     # friends = SecretboxMembersSerializer(source='secretboxmembers_set', many=True)
+
+    
+@api_view(['GET'])
+def draft_permission( request, pk):
+  user = request.user
+  box = SecretBox.objects.get(pk=pk)
+  if box.admin == user:
+    return Response(data={'admin': True}, status=200)
+  return Response(data={'admin': False}, status=200)
+
 class membership_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Membership.objects.all()
     serializer_class = MembershipSerializer
+    
 
 @api_view(['GET', 'POST', 'DELETE'])
 def post_peoples( request):
     if request.method == 'POST': 
-      box_name = {'name': request.data['box']}
+      box_name = {'name': request.data['box'], 'admin': request.user.id}
       box_serializer = SecretBoxSerializer(data=box_name)
       if not box_serializer.is_valid():
         return Response(data=box_serializer.errors, status=401)
