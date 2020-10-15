@@ -20,6 +20,10 @@ from rest_framework.fields import empty
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import UpdateModelMixin
+
+from .email import send
 
 class UserCreate(generics.CreateAPIView):
   permission_classes = ()
@@ -43,6 +47,14 @@ class UserLogin(APIView):
 class MemberListCreate( generics.ListCreateAPIView):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
+
+class MemberPartialUpdate(GenericAPIView, UpdateModelMixin):
+    queryset = Member.objects.all()
+    serializer_class = MemberSerializer
+
+    def put(self, request, *args, **kwargs):
+      return self.partial_update(request, *args, **kwargs)
+
 
 class SecretBoxListView( generics.ListAPIView):
     queryset = SecretBox.objects.all()
@@ -120,6 +132,13 @@ def post_peoples( request):
 def swop_peoples( request):
   if request.method == 'POST': 
     draft(request.data['id'])
+  return Response(data='Перемешано успешно', status=201)
+
+@api_view(['GET', 'POST', 'DELETE'])
+def send_emails( request):
+  if request.method == 'POST': 
+    send()
+    # draft(request.data['id'])
   return Response(data='Перемешано успешно', status=201)
     
 # @api_view(['GET'])
