@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/customer/postlist/', views.post_peoples),
     path('api/draft/', views.SecretBoxListView.as_view(), name='draft-list'),
     path('api/draft/<int:pk>/', views.draft_detail.as_view(), name='draft-detail'),
+    path('api/draft/part_update/<int:pk>/', views.SecretPartialUpdate.as_view()),
     path('api/draftpermission/<int:pk>/', views.draft_permission, name='draft-permission'),
     path('api/draft/swop/', views.swop_peoples),
     path('api/draft/email/', views.send_emails),

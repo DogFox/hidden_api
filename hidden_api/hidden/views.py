@@ -2,6 +2,7 @@ import random
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
+from django.conf import settings
 
 from .models import Member
 from .models import SecretBox
@@ -22,6 +23,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import UpdateModelMixin
+from rest_framework_jwt.utils import jwt_payload_handler
+from rest_framework_jwt.utils import jwt
 
 from .email import send
 
@@ -35,13 +38,40 @@ class UserLogin(APIView):
   authentication_classes = ()
 
   def post(self, request):
-    username = request.data.get("username")
-    password = request.data.get("password")
-    user = authenticate(username=username, password=password)
-    if user:
-        return Response({"token": user.auth_token.key})
-    else:
-        return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        username = request.data['username']
+        password = request.data['password']
+ 
+        user = authenticate(username=username, password=password)
+        if user:
+            try:
+                payload = jwt_payload_handler(user)
+                token = jwt.encode(payload, settings.SECRET_KEY)
+                user_details = {}
+                user_details['name'] = "%s %s" % (
+                    user.first_name, user.last_name)
+                user_details['token'] = token
+                # user_logged_in.send(sender=user.__class__,request=request, user=user)
+                return Response(user_details, status=status.HTTP_200_OK)
+ 
+            except Exception as e:
+                raise e
+        else:
+            res = {
+                'error': 'can not authenticate with the given credentials or the account has been deactivated'}
+            return Response(res, status=status.HTTP_403_FORBIDDEN)
+    except KeyError:
+        res = {'error': 'please provide a email and a password'}
+        return Response(res)
+
+
+    # username = request.data.get("username")
+    # password = request.data.get("password")
+    # user = authenticate(username=username, password=password)
+    # if user:
+    #     return Response({"token": user.auth_token.key})
+    # else:
+    #     return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MemberListCreate( generics.ListCreateAPIView):
@@ -55,7 +85,13 @@ class MemberPartialUpdate(GenericAPIView, UpdateModelMixin):
     def put(self, request, *args, **kwargs):
       return self.partial_update(request, *args, **kwargs)
 
+class SecretPartialUpdate(GenericAPIView, UpdateModelMixin):
+    queryset = SecretBox.objects.all()
+    serializer_class = SecretBoxSerializer
 
+    def put(self, request, *args, **kwargs):
+      return self.partial_update(request, *args, **kwargs)
+      
 class SecretBoxListView( generics.ListAPIView):
     queryset = SecretBox.objects.all()
     serializer_class = SecretBoxSerializer
@@ -66,6 +102,7 @@ class SecretBoxListView( generics.ListAPIView):
       memberships = Membership.objects.filter(member__in=members)
 
       return SecretBox.objects.filter(secretboxs__in=memberships)
+
   
 class draft_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SecretBox.objects.all()
