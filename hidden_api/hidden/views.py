@@ -174,8 +174,7 @@ def swop_peoples( request):
 @api_view(['GET', 'POST', 'DELETE'])
 def send_emails( request):
   if request.method == 'POST': 
-    send()
-    # draft(request.data['id'])
+    send(request.data['id'])
   return Response(data='Перемешано успешно', status=201)
     
 # @api_view(['GET'])

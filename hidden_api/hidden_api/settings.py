@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,7 +35,6 @@ INSTALLED_APPS = [
     'hidden.apps.HiddenConfig',
     'rest_framework',
     'corsheaders',
-    'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -160,8 +160,9 @@ JWT_AUTH = {
  
     'JWT_VERIFY': True,
     'JWT_VERIFY_EXPIRATION': True,
-    # 'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),
+    #'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
     'JWT_AUTH_HEADER_PREFIX': 'Token',
+    'JWT_ALLOW_REFRESH': True,
  
 }
 
