@@ -13,6 +13,7 @@ from .serializers import UserSerializer
 from .serializers import MemberSerializer
 from .serializers import SecretBoxSerializer
 from .serializers import MembershipSerializer
+from .serializers import ChangePasswordSerializer
 
 from rest_framework import generics
 from rest_framework import status
@@ -21,6 +22,7 @@ from rest_framework.fields import empty
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated  
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import UpdateModelMixin
 from rest_framework_jwt.utils import jwt_payload_handler
@@ -63,15 +65,43 @@ class UserLogin(APIView):
     except KeyError:
         res = {'error': 'please provide a email and a password'}
         return Response(res)
+        
+class UserPartialUpdate(GenericAPIView, UpdateModelMixin):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
+    def put(self, request, *args, **kwargs):
+      return self.partial_update(request, *args, **kwargs)
 
-    # username = request.data.get("username")
-    # password = request.data.get("password")
-    # user = authenticate(username=username, password=password)
-    # if user:
-    #     return Response({"token": user.auth_token.key})
-    # else:
-    #     return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
+class UserPasswordUpdate(GenericAPIView, UpdateModelMixin):
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = ()
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def post(self, request, *args, **kwargs):
+      self.object = self.get_object()
+      serializer = ChangePasswordSerializer(data=request.data)
+
+      if serializer.is_valid():
+          # Check old password
+          old_password = serializer.data.get("old_password")
+          if not self.object.check_password(old_password):
+              return Response({"old_password": ["Wrong password."]}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+          # set_password also hashes the password that the user will get
+          self.object.set_password(serializer.data.get("new_password"))
+          self.object.save()
+          return Response(status=status.HTTP_204_NO_CONTENT)
+
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+@api_view(['GET'])
+def current_user( request ):
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data, status=200)
 
 
 class MemberListCreate( generics.ListCreateAPIView):
@@ -103,14 +133,10 @@ class SecretBoxListView( generics.ListAPIView):
 
       return SecretBox.objects.filter(secretboxs__in=memberships)
 
-  
 class draft_detail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SecretBox.objects.all()
     serializer_class = SecretBoxSerializer
 
-    # friends = SecretboxMembersSerializer(source='secretboxmembers_set', many=True)
-
-    
 @api_view(['GET'])
 def draft_permission( request, pk):
   user = request.user
@@ -176,15 +202,6 @@ def send_emails( request):
   if request.method == 'POST': 
     send(request.data['id'])
   return Response(data='Перемешано успешно', status=201)
-    
-# @api_view(['GET'])
-# @authentication_classes(())
-# @permission_classes(())
-# def check_system( request):
-#   API_key = request.META.get('HTTP_AUTHORIZATION')[6:]
-  
-#   test = 1
-#   return Response(data='Проверено', status=201)
 
 def draft(draft_id):
   members = []

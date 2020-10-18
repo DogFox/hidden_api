@@ -15,6 +15,10 @@ urlpatterns = [
     path('api/membership/<int:pk>/', views.membership_detail.as_view(), name='membership-detail'),
     path('api/users/register/', views.UserCreate.as_view(), name='user-create'),
     path('api/users/login/', views.UserLogin.as_view(), name='user-login'),
+    path('api/users/current/', views.current_user, name='user-current'),
+    path('api/users/part_update/<int:pk>/', views.UserPartialUpdate.as_view()),
+    path('api/users/change_password/', views.UserPasswordUpdate.as_view(), name="change_password"),
+
     # path('api/check_system/', views.check_system, name='check-system'),
     
 ]
