@@ -3,17 +3,74 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from .models import Membership
 from .models import SecretBox
+from django.contrib.auth.models import User
+from rest_framework_jwt.utils import jwt, jwt_payload_handler, jwt_decode_handler
+from django.conf import settings
 
 host = "smtp.gmail.com"
 receiver_email = "kurovda@gmail.com"
 sender_email = "hidden.santa76@gmail.com"
 
 
-def send(draft_id):
+def send(draft_id, *args, **kwargs):
+  receivers = []
+  new_users = kwargs.get('new_users')
   secretbox = SecretBox.objects.get(pk=draft_id)
+  memberships_set = Membership.objects.filter(secretbox=draft_id)
 
-  htmltext = """\
-  <!DOCTYPE html
+  for membership in memberships_set:
+    user = User.objects.get(pk=membership.member.user_id)
+    payload = jwt_payload_handler(user)
+    token = jwt.encode(payload, settings.SECRET_KEY)
+    receiver = {'email': user.email, 'token': token.decode("utf-8")}
+    
+    if new_users:
+      for new_user in new_users:
+        if new_user['email']==user.email:
+          receiver['password'] = new_user['password']
+        
+    receivers.append(receiver)
+  
+  # Определили сообщение, при переборе будет генерить текст
+  message = MIMEMultipart("alternative")
+  message["Subject"] = secretbox.name + " " + secretbox.description
+  
+  # Сгенерировали сервер отправки
+  server = smtplib.SMTP(host, 587)
+  server.starttls()
+  server.login(sender_email,'afzpvkrqanqyltfa')
+
+  for receiver in receivers:
+    htmltext = makeBodyEmail(draft_id, token=receiver['token'], password=receiver.get('password', None))
+    message["From"] = sender_email
+    message["To"] = receiver['email']
+
+    text = """\
+    Привет!
+    Мы тут замутили Тайного Санту!
+    Ты участвуешь!
+    Переходи
+    http://localhost:8080/mydrafts/""" + str(draft_id)
+
+    # Сделать их текстовыми\html объектами MIMEText
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(htmltext, "html")
+
+    # Внести HTML\текстовые части сообщения MIMEMultipart 
+    # Почтовый клиент сначала попытается отрендерить последнюю часть
+    message.attach(part1)
+    message.attach(part2)
+    
+    server.sendmail(sender_email, [receiver['email']], message.as_string())
+  
+  server.quit()
+
+def makeBodyEmail(box_id, **kwargs):
+  token = kwargs.get('token', '')
+  password = kwargs.get('password', '')
+
+  text = """\
+                    <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"
   style="width:100%;font-family:tahoma, verdana, segoe, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
@@ -413,12 +470,23 @@ def send(draft_id):
                                 </td>
                               </tr>
                               <tr style="border-collapse:collapse">
-                                <td align="center" style="padding:0;Margin:0;padding-bottom:5px">
-                                  <h2
-                                    style="Margin:0;line-height:34px;mso-line-height-rule:exactly;font-family:Poppins, sans-serif;font-size:28px;font-style:normal;font-weight:bold;color:#00413F">
-                                    <br></h2>
+                                <td align="center"
+                                  style="Margin:0;padding-left:5px;padding-right:5px;padding-top:10px;padding-bottom:10px">
+                                  <p
+                                    style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:15px;font-family:tahoma, verdana, segoe, sans-serif;line-height:23px;color:#333333">
+                                    <br></p>
                                 </td>
                               </tr>
+                              """ + ( """
+                              <tr style="border-collapse:collapse">
+                                <td align="center" style="padding:0;Margin:0;padding-bottom:5px">
+                                  <h4
+                                    style="Margin:0;line-height:120%;mso-line-height-rule:exactly;font-family:Poppins, sans-serif;color:#00413F">
+                                    Так как ты у нас новенький, выдам тебе временный пароль, поменять не забудь: """ + str(password) + """
+                                  </h4>
+                                </td>
+                              </tr>
+                              """ if password else """ """ ) + """
                               <tr style="border-collapse:collapse">
                                 <td align="center"
                                   style="Margin:0;padding-left:5px;padding-right:5px;padding-top:10px;padding-bottom:10px">
@@ -431,7 +499,7 @@ def send(draft_id):
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:15px">
                                   <span class="msohide es-button-border"
                                     style="border-style:solid;border-color:#00C4C6;background:#00413F;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a
-                                      href="http://localhost:8080/mydrafts/""" + str(draft_id) + """" class="es-button" target="_blank"
+                                      href="http://localhost:8080/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
                                       style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;color:#FFFFFF;border-style:solid;border-color:#00413F;border-width:10px 20px 10px 20px;display:inline-block;background:#00413F;border-radius:5px;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center">Жмяк
                                       ➝</a>
                                   </span>
@@ -497,35 +565,7 @@ def send(draft_id):
     </table>
   </div>
 </body>
+
 </html>
-  """
-
-  message = MIMEMultipart("alternative")
-  message["Subject"] = secretbox.name + " " + secretbox.description
-  message["From"] = sender_email
-  message["To"] = receiver_email
-
-  text = """\
-  Привет!
-  Мы тут замутили Тайного Санту!
-  Ты участвуешь!
-  Переходи
-  http://localhost:8080/mydrafts/""" + str(draft_id)
-  
-  # Сделать их текстовыми\html объектами MIMEText
-  part1 = MIMEText(text, "plain")
-  part2 = MIMEText(htmltext, "html")
-
-  # Внести HTML\текстовые части сообщения MIMEMultipart 
-  # Почтовый клиент сначала попытается отрендерить последнюю часть
-  message.attach(part1)
-  message.attach(part2)
-  
-  memberships_set = Membership.objects.filter(secretbox=draft_id)
-
-
-  server = smtplib.SMTP(host, 587)
-  server.starttls()
-  server.login(sender_email,'afzpvkrqanqyltfa')
-  server.sendmail(sender_email, [receiver_email], message.as_string())
-  server.quit()
+                      """
+  return text

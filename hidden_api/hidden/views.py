@@ -25,10 +25,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated  
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import UpdateModelMixin
-from rest_framework_jwt.utils import jwt_payload_handler
-from rest_framework_jwt.utils import jwt
+from rest_framework_jwt.utils import jwt, jwt_payload_handler, jwt_decode_handler
 
 from .email import send
+from .generate import get_random_string
 
 class UserCreate(generics.CreateAPIView):
   permission_classes = ()
@@ -40,10 +40,12 @@ class UserLogin(APIView):
   authentication_classes = ()
 
   def post(self, request):
+    # token = request.data['token']
+    # payload3 = jwt_decode_handler(token)
     try:
         username = request.data['username']
         password = request.data['password']
- 
+        
         user = authenticate(username=username, password=password)
         if user:
             try:
@@ -53,6 +55,7 @@ class UserLogin(APIView):
                 user_details['name'] = "%s %s" % (
                     user.first_name, user.last_name)
                 user_details['token'] = token
+
                 # user_logged_in.send(sender=user.__class__,request=request, user=user)
                 return Response(user_details, status=status.HTTP_200_OK)
  
@@ -97,6 +100,29 @@ class UserPasswordUpdate(GenericAPIView, UpdateModelMixin):
           return Response(status=status.HTTP_204_NO_CONTENT)
 
       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class ActivateUser(APIView):
+#     def get(self, request, *args, **kwargs):
+#         token = kwargs.pop('token')
+#         try:
+#             payload = jwt_decode_handler(token)
+#         except jwt.ExpiredSignature:
+#             msg = _('Signature has expired.')
+#             raise exceptions.AuthenticationFailed(msg)
+#         except jwt.DecodeError:
+#             msg = _('Error decoding signature.')
+#             raise exceptions.AuthenticationFailed(msg)
+#         except jwt.InvalidTokenError:
+#             raise exceptions.AuthenticationFailed()
+
+#         user_to_activate = User.objects.get(id=payload.get('user_id'))
+#         user_to_activate.is_active = True
+#         user_to_activate.save()
+
+#         return Response(
+#             {'User Activated'},
+#             status=status.HTTP_200_OK
+#         )
         
 @api_view(['GET'])
 def current_user( request ):
@@ -159,6 +185,7 @@ def post_peoples( request):
       if not box_serializer.is_valid():
         return Response(data=box_serializer.errors, status=401)
 
+      new_users = []
       if request.data['items']:
         for santa in request.data['items']:
           santa.pop('id')
@@ -171,11 +198,15 @@ def post_peoples( request):
           try:
             new_user = User.objects.get(email=santa['email'])
           except:
-            new_user_serializer = UserSerializer(data={'firstname': santa['name'], 'username': santa['email'], 'email': santa['email'], 'password': santa['email']})
+            temp_pass = get_random_string(8)
+            new_user_serializer = UserSerializer(data={'firstname': santa['name'], 'username': santa['email'], 'email': santa['email'], 'password': temp_pass})
             if not new_user_serializer.is_valid():
               return Response(data=new_user_serializer.errors, status=401)
             new_user = new_user_serializer.save()
+            receiver = {'username': santa['email'], 'password': temp_pass, 'email': santa['email']}
+            new_users.append(receiver)
           
+          # receivers.append(new_user)
           santa['user'] = new_user.id
           serializer = MemberSerializer(data=santa)
           serializer.is_valid()
@@ -185,23 +216,26 @@ def post_peoples( request):
           if not membership_serializer.is_valid():
             return Response(data=membership_serializer.errors, status=401)
           membership_serializer.save()
+
+
       else:
         return Response(data='Массив участников пустой', status=401)
     
     draft(new_box.id)
+    send(new_box.id, new_users=new_users)
     return Response( status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST', 'DELETE'])
-def swop_peoples( request):
+def swop_peoples(request):
   if request.method == 'POST': 
     draft(request.data['id'])
   return Response(data='Перемешано успешно', status=201)
 
 @api_view(['GET', 'POST', 'DELETE'])
-def send_emails( request):
+def send_emails(request):
   if request.method == 'POST': 
     send(request.data['id'])
-  return Response(data='Перемешано успешно', status=201)
+  return Response(data='Рассылка завершена', status=201)
 
 def draft(draft_id):
   members = []
