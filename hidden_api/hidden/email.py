@@ -8,7 +8,6 @@ from rest_framework_jwt.utils import jwt, jwt_payload_handler, jwt_decode_handle
 from django.conf import settings
 
 host = "smtp.gmail.com"
-receiver_email = "kurovda@gmail.com"
 sender_email = "hidden.santa76@gmail.com"
 
 
@@ -31,17 +30,16 @@ def send(draft_id, *args, **kwargs):
         
     receivers.append(receiver)
   
-  # Определили сообщение, при переборе будет генерить текст
-  message = MIMEMultipart("alternative")
-  message["Subject"] = secretbox.name + " " + secretbox.description
-  
   # Сгенерировали сервер отправки
   server = smtplib.SMTP(host, 587)
   server.starttls()
   server.login(sender_email,'afzpvkrqanqyltfa')
 
   for receiver in receivers:
-    htmltext = makeBodyEmail(draft_id, token=receiver['token'], password=receiver.get('password', None))
+    # Определили сообщение, при переборе будет генерить текст
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = secretbox.name + " " + secretbox.description
     message["From"] = sender_email
     message["To"] = receiver['email']
 
@@ -52,6 +50,7 @@ def send(draft_id, *args, **kwargs):
     Переходи
     http://localhost:8080/mydrafts/""" + str(draft_id)
 
+    htmltext = makeBodyEmail(draft_id, token=receiver['token'], password=receiver.get('password', None))
     # Сделать их текстовыми\html объектами MIMEText
     part1 = MIMEText(text, "plain")
     part2 = MIMEText(htmltext, "html")
@@ -499,7 +498,7 @@ def makeBodyEmail(box_id, **kwargs):
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:15px">
                                   <span class="msohide es-button-border"
                                     style="border-style:solid;border-color:#00C4C6;background:#00413F;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a
-                                      href="http://localhost:8080/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
+                                      href="http://95.183.35.164/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
                                       style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;color:#FFFFFF;border-style:solid;border-color:#00413F;border-width:10px 20px 10px 20px;display:inline-block;background:#00413F;border-radius:5px;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center">Жмяк
                                       ➝</a>
                                   </span>
