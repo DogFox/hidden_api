@@ -9,6 +9,7 @@ from django.conf import settings
 
 host = "smtp.gmail.com"
 sender_email = "hidden.santa76@gmail.com"
+ip = "95.183.35.164:8080"
 
 
 def send(draft_id, *args, **kwargs):
@@ -498,7 +499,7 @@ def makeBodyEmail(box_id, **kwargs):
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:15px">
                                   <span class="msohide es-button-border"
                                     style="border-style:solid;border-color:#00C4C6;background:#00413F;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a
-                                      href="http://95.183.35.164/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
+                                      href="http://"""+ str(ip)+"""/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
                                       style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;color:#FFFFFF;border-style:solid;border-color:#00413F;border-width:10px 20px 10px 20px;display:inline-block;background:#00413F;border-radius:5px;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center">Жмяк
                                       ➝</a>
                                   </span>
