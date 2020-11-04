@@ -13,63 +13,65 @@ ip = "95.183.35.164:8080"
 
 
 def send(draft_id, *args, **kwargs):
-  receivers = []
-  new_users = kwargs.get('new_users')
-  secretbox = SecretBox.objects.get(pk=draft_id)
-  memberships_set = Membership.objects.filter(secretbox=draft_id)
+    receivers = []
+    new_users = kwargs.get('new_users')
+    secretbox = SecretBox.objects.get(pk=draft_id)
+    memberships_set = Membership.objects.filter(secretbox=draft_id)
 
-  for membership in memberships_set:
-    user = User.objects.get(pk=membership.member.user_id)
-    payload = jwt_payload_handler(user)
-    token = jwt.encode(payload, settings.SECRET_KEY)
-    receiver = {'email': user.email, 'token': token.decode("utf-8")}
-    
-    if new_users:
-      for new_user in new_users:
-        if new_user['email']==user.email:
-          receiver['password'] = new_user['password']
-        
-    receivers.append(receiver)
-  
-  # Сгенерировали сервер отправки
-  server = smtplib.SMTP(host, 587)
-  server.starttls()
-  server.login(sender_email,'afzpvkrqanqyltfa')
+    for membership in memberships_set:
+        user = User.objects.get(pk=membership.member.user_id)
+        payload = jwt_payload_handler(user)
+        token = jwt.encode(payload, settings.SECRET_KEY)
+        receiver = {'email': user.email, 'token': token.decode("utf-8")}
 
-  for receiver in receivers:
-    # Определили сообщение, при переборе будет генерить текст
-    message = MIMEMultipart("alternative")
+        if new_users:
+            for new_user in new_users:
+                if new_user['email'] == user.email:
+                    receiver['password'] = new_user['password']
 
-    message["Subject"] = secretbox.name + " " + secretbox.description
-    message["From"] = sender_email
-    message["To"] = receiver['email']
+        receivers.append(receiver)
 
-    text = """\
+    # Сгенерировали сервер отправки
+    server = smtplib.SMTP(host, 587)
+    server.starttls()
+    server.login(sender_email, 'afzpvkrqanqyltfa')
+
+    for receiver in receivers:
+        # Определили сообщение, при переборе будет генерить текст
+        message = MIMEMultipart("alternative")
+
+        message["Subject"] = secretbox.name + " " + secretbox.description
+        message["From"] = sender_email
+        message["To"] = receiver['email']
+
+        text = """\
     Привет!
     Мы тут замутили Тайного Санту!
     Ты участвуешь!
     Переходи
     http://localhost:8080/mydrafts/""" + str(draft_id)
 
-    htmltext = makeBodyEmail(draft_id, token=receiver['token'], password=receiver.get('password', None))
-    # Сделать их текстовыми\html объектами MIMEText
-    part1 = MIMEText(text, "plain")
-    part2 = MIMEText(htmltext, "html")
+        htmltext = makeBodyEmail(
+            draft_id, token=receiver['token'], password=receiver.get('password', None))
+        # Сделать их текстовыми\html объектами MIMEText
+        part1 = MIMEText(text, "plain")
+        part2 = MIMEText(htmltext, "html")
 
-    # Внести HTML\текстовые части сообщения MIMEMultipart 
-    # Почтовый клиент сначала попытается отрендерить последнюю часть
-    message.attach(part1)
-    message.attach(part2)
-    
-    server.sendmail(sender_email, [receiver['email']], message.as_string())
-  
-  server.quit()
+        # Внести HTML\текстовые части сообщения MIMEMultipart
+        # Почтовый клиент сначала попытается отрендерить последнюю часть
+        message.attach(part1)
+        message.attach(part2)
+
+        server.sendmail(sender_email, [receiver['email']], message.as_string())
+
+    server.quit()
+
 
 def makeBodyEmail(box_id, **kwargs):
-  token = kwargs.get('token', '')
-  password = kwargs.get('password', '')
+    token = kwargs.get('token', '')
+    password = kwargs.get('password', '')
 
-  text = """\
+    text = """\
                     <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -477,7 +479,7 @@ def makeBodyEmail(box_id, **kwargs):
                                     <br></p>
                                 </td>
                               </tr>
-                              """ + ( """
+                              """ + ("""
                               <tr style="border-collapse:collapse">
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:5px">
                                   <h4
@@ -486,7 +488,7 @@ def makeBodyEmail(box_id, **kwargs):
                                   </h4>
                                 </td>
                               </tr>
-                              """ if password else """ """ ) + """
+                              """ if password else """ """) + """
                               <tr style="border-collapse:collapse">
                                 <td align="center"
                                   style="Margin:0;padding-left:5px;padding-right:5px;padding-top:10px;padding-bottom:10px">
@@ -499,7 +501,7 @@ def makeBodyEmail(box_id, **kwargs):
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:15px">
                                   <span class="msohide es-button-border"
                                     style="border-style:solid;border-color:#00C4C6;background:#00413F;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a
-                                      href="http://"""+ str(ip)+"""/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
+                                      href="http://""" + str(ip)+"""/mydrafts/""" + str(box_id) + """?token=""" + str(token) + """" class="es-button" target="_blank"
                                       style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;color:#FFFFFF;border-style:solid;border-color:#00413F;border-width:10px 20px 10px 20px;display:inline-block;background:#00413F;border-radius:5px;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center">Жмяк
                                       ➝</a>
                                   </span>
@@ -568,4 +570,4 @@ def makeBodyEmail(box_id, **kwargs):
 
 </html>
                       """
-  return text
+    return text
