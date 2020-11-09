@@ -27,7 +27,7 @@ SECRET_KEY = '+$*09n-_2cinbe*09@tc7lt=nk1(u=2q@-gbx8)&+um86g%w+n'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS=['*']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -101,10 +101,10 @@ DATABASES = {
     # },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hidden_test',
+        'NAME': 'hidden',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '127.0.0.1', 
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }
@@ -164,13 +164,13 @@ REST_FRAMEWORK = {
 }
 
 JWT_AUTH = {
- 
+
     'JWT_VERIFY': True,
     'JWT_VERIFY_EXPIRATION': True,
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
     'JWT_AUTH_HEADER_PREFIX': 'Token',
     'JWT_ALLOW_REFRESH': True,
- 
+
 }
 
 # APPEND_SLASH=False
