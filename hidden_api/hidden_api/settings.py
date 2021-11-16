@@ -101,7 +101,8 @@ DATABASES = {
     # },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hidden',
+        # 'NAME': 'hidden',
+        'NAME': 'hidden_test',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': '127.0.0.1',

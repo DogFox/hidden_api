@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/users/part_update/<int:pk>/', views.UserPartialUpdate.as_view()),
     path('api/users/change_password/',
          views.UserPasswordUpdate.as_view(), name="change_password"),
+    path('api/users/restore_password/', views.restore_password),
 
     # path('api/check_system/', views.check_system, name='check-system'),
 

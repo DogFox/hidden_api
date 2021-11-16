@@ -27,7 +27,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import UpdateModelMixin
 from rest_framework_jwt.utils import jwt, jwt_payload_handler, jwt_decode_handler
 
-from .email import send
+from .email import send, send_restored_password
 from .generate import get_random_string
 
 
@@ -65,10 +65,10 @@ class UserLogin(APIView):
                     raise e
             else:
                 res = {
-                    'error': 'can not authenticate with the given credentials or the account has been deactivated'}
+                    'error': 'Введен неверный логин или пароль'}
                 return Response(res, status=status.HTTP_403_FORBIDDEN)
         except KeyError:
-            res = {'error': 'please provide a email and a password'}
+            res = {'error': 'Введите логин и пароль'}
             return Response(res)
 
 
@@ -96,7 +96,7 @@ class UserPasswordUpdate(GenericAPIView, UpdateModelMixin):
             # Check old password
             old_password = serializer.data.get("old_password")
             if not self.object.check_password(old_password):
-                return Response({"old_password": ["Wrong password."]},
+                return Response({"old_password": ["Неправильный пароль"]},
                                 status=status.HTTP_400_BAD_REQUEST)
             # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
@@ -104,6 +104,23 @@ class UserPasswordUpdate(GenericAPIView, UpdateModelMixin):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def restore_password(request):
+    temp_pass = get_random_string(8)
+    email = request.data['email']
+    try:
+        user = User.objects.get(email=email)
+        user.set_password(temp_pass)
+        user.save()
+        send_restored_password(email, temp_pass)
+    except:
+        res = {
+            'error': 'Пользователь с такой почтой не найден'}
+        return Response(res, status=status.HTTP_409_CONFLICT)
+    return Response(data='Временный пароль выслан на почту', status=status.HTTP_201_CREATED)
 
 # class ActivateUser(APIView):
 #     def get(self, request, *args, **kwargs):

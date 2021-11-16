@@ -12,6 +12,37 @@ sender_email = "hidden.santa76@gmail.com"
 ip = "95.183.35.164:8080"
 
 
+def send_restored_password(email, password, *args, **kwargs):
+    # Сгенерировали сервер отправки
+    server = smtplib.SMTP(host, 587)
+    server.starttls()
+    server.login(sender_email, 'afzpvkrqanqyltfa')
+    # Определили сообщение, при переборе будет генерить текст
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = 'Восстановление пароля'
+    message["From"] = sender_email
+    message["To"] = email
+
+    text = """\
+    Привет!
+    Сгенерировал тебе новый пароль, но больше не теряй!
+    """ + str(password)
+
+    # Сделать их текстовыми\html объектами MIMEText
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(text, "html")
+
+    # Внести HTML\текстовые части сообщения MIMEMultipart
+    # Почтовый клиент сначала попытается отрендерить последнюю часть
+    message.attach(part1)
+    message.attach(part2)
+
+    server.sendmail(sender_email, [email], message.as_string())
+
+    server.quit()
+
+
 def send(draft_id, *args, **kwargs):
     receivers = []
     new_users = kwargs.get('new_users')
@@ -420,7 +451,7 @@ def makeBodyEmail(box_id, **kwargs):
                                 <td align="center" style="padding:0;Margin:0">
                                   <h1
                                     style="Margin:0;line-height:49px;mso-line-height-rule:exactly;font-family:georgia, times, 'times new roman', serif;font-size:49px;font-style:normal;font-weight:bold;color:#333333">
-                                    Тайный Санта 2020</h1>
+                                    Тайный Санта 2021</h1>
                                 </td>
                               </tr>
                             </table>
